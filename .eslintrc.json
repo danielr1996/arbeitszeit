@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ],
+  "rules": {
+    "no-restricted-imports": ["warn", {
+      "patterns": ["..*"]
+    }],
+    "semi": ["warn","never"],
+    "no-restricted-syntax": ["warn", {
+      "selector": "ExportDefaultDeclaration",
+      "message": "Prefer named exports"
+    }]
+  }
+}

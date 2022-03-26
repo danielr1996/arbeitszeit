@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  height: 100vh;
+}
+
+body {
+  min-height: 100vh;
+}
+@layer utilities {
+  .whitespace-breakspaces{
+    white-space: break-spaces;
+  }
+}

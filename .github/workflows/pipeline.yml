@@ -1,0 +1,30 @@
+name: Build
+on:
+  push:
+jobs:
+  build:
+    name: Build
+    runs-on: 'ubuntu-latest'
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['18.x']
+    steps:
+      - uses: actions/checkout@master
+      - name: Install Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{matrix.node-version}}
+      - name: Prepare
+        run: |
+          npm install
+      - name: Run Tests
+        run: |
+          npx react-scripts test --coverage --no-watchmann --watchAll=false
+      - name: Upload Test
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/clover.xml
+          fail_ci_if_error: true
+          verbose: true
