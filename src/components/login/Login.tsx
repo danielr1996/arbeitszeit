@@ -1,28 +1,37 @@
-import {FormEvent, FunctionComponent, useState} from "react";
-import {useNavigate} from "react-router-dom";
-import { useLoginMutation } from '../services/kimai'
-import {useLocalStorage} from "../lib/useLocalStorage";
-import {DropdownText} from "../components/forms/DropdownText";
-import {TextInput} from "../components/forms/TextInput";
-import {Button} from "../components/forms/Button/Button";
+import {FormEvent, FunctionComponent, useState} from "react"
+import {useNavigate} from "react-router-dom"
+import { useLoginMutation } from 'redux/kimai'
+import {useLocalStorage} from "lib/useLocalStorage"
+import {DropdownText} from "lib/forms/DropdownText"
+import {TextInput} from "lib/forms/TextInput"
+import {Button} from "lib/forms/Button/Button"
+
+import { useDispatch } from 'react-redux'
+import {setCredentials} from "components/login/loginSlice"
 
 export const Login: FunctionComponent = () => {
-    const [login, {isLoading}] = useLoginMutation()
+    const dispatch = useDispatch()
+    const [login] = useLoginMutation()
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [environments, setEnvironment] = useLocalStorage<string[]>('environments', [])
-    const [baseUrl, setBaseUrl] = useState(environments[0] || '')
+    const [url, setUrl] = useState('')
     const [hasError, setError] = useState(false)
 
-    const addEnvironment = () => setEnvironment(e => [...e, baseUrl])
-    const removeEnvironment = () => setEnvironment(e => e.filter(v => v !== baseUrl))
+    const addEnvironment = () => setEnvironment(e => [...e, url])
+    const removeEnvironment = () => setEnvironment(e => e.filter(v => v !== url))
 
     const navigate = useNavigate()
 
     const submit = async (e: FormEvent) => {
         e.preventDefault()
-        const response = await login({username, password})
-        console.log(response)
+        try{
+            await login({url, username, password}).unwrap()
+            dispatch(setCredentials({username,password,url}))
+            navigate('/')
+        }catch(err){
+            setError(true)
+        }
     }
 
     return <>
@@ -31,10 +40,10 @@ export const Login: FunctionComponent = () => {
                 <form onSubmit={submit}>
                     <div className="flex">
                         <div className="mr-3">
-                            <div className="mb-5"><DropdownText options={environments} value={baseUrl}
-                                                                onChange={e => setBaseUrl(e)} label="Umgebung:"/></div>
+                            <div className="mb-5"><DropdownText options={environments} value={url}
+                                                                onChange={e => setUrl(e)} label="Umgebung:"/></div>
                             <div className="mb-5"><TextInput value={username} autoComplete="username"
-                                                             label="Benutzernamen:" onChange={e => setUsername(e)}/>
+                                                             label="Benutzername:" onChange={e => setUsername(e)}/>
                             </div>
                             <div className="mb-5"><TextInput value={password} password autoComplete="password"
                                                              label="Password:" onChange={e => setPassword(e)}/></div>

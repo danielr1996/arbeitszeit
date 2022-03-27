@@ -1,4 +1,4 @@
-import {TextInput} from "./TextInput";
+import {TextInput} from "lib/forms/TextInput"
 
 type Props = {
     label?: string,
