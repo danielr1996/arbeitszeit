@@ -9,8 +9,8 @@ const dynamicBaseQuery: BaseQueryFn = async (args, WebApi, extraOptions) => {
         prepareHeaders: (headers, {getState}) => {
             const auth = (getState() as RootState).login
             if (auth.username && auth.password) {
-                headers.set('X-AUTH-USER', 'd.richter@headtrip.eu')
-                headers.set('X-AUTH-TOKEN', 'Reichenschwand5')
+                headers.set('X-AUTH-USER', auth.username)
+                headers.set('X-AUTH-TOKEN', auth.password)
             }
             return headers
         }
@@ -30,7 +30,7 @@ export type Timesheet = {
 
 export const kimaiApi = createApi({
     reducerPath: 'kimaiApi',
-    tagTypes: ['user','timesheets'],
+    tagTypes: ['user','timesheets', 'today', 'active'],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
         login: builder.mutation<any, { url: string, username: string, password: string }>({
@@ -41,6 +41,21 @@ export const kimaiApi = createApi({
                     'X-AUTH-TOKEN': password,
                 }
             }),
+        }),
+        startTimesheet: builder.mutation<void, void>({
+            query: ()=>({url: `timesheets`, method: 'POST', body: {activity: '1', project: '1'}}),
+            invalidatesTags: ['today','active']
+        }),
+        stopTimesheet: builder.mutation<void, number>({
+            invalidatesTags: ['today','active'],
+            query: (id)=>({url: `timesheets/${id}/stop`, method: 'PATCH'})
+        }),
+        getActiveTimesheet: builder.query<Timesheet | null, void>({
+            providesTags: ['timesheets', 'today', 'active'],
+            query: ()=>`timesheets?active=1`,
+            transformResponse: (response: Timesheet[]) => {
+                return response.length > 0 ? response[0] : null
+            },
         }),
         user: builder.query<{ avatar: string }, void>({
             query: () => `users/me`,
@@ -59,29 +74,14 @@ export const kimaiApi = createApi({
                     const end = active ? Temporal.Now.plainDateTimeISO() : Temporal.PlainDateTime.from(timesheet.end)
                     const duration = begin.until(end)
                     return{...timesheet, begin, end, active, duration}})
-            },
-            async onQueryStarted(id, { dispatch, queryFulfilled }) {
-                // `onStart` side-effect
-                // dispatch(messageCreated('Fetching post...'))
-                // console.log('Fetching')
-                try {
-                    const { data } = await queryFulfilled
-                    // `onSuccess` side-effect
-                    // console.log(data)
-                    // dispatch(messageCreated('Post received!'))
-                } catch (err) {
-                    // console.log('error')
-                    // `onError` side-effect
-                    // dispatch(messageCreated('Error fetching post!'))
-                }
-            },
+            }
         }),
         getTodaysTimesheet: builder.query<Timesheet[],void>({
             query: () => {
                 const {isoDay, isoMonth, isoYear} = Temporal.Now.plainDateISO().getISOFields()
                 return `timesheets?begin=${isoYear}-${isoMonth}-${isoDay}T00:00:00`
             },
-            providesTags: ['timesheets'],
+            providesTags: ['timesheets', 'today'],
             transformResponse: (response: { id: number, description: string, tags: string[],begin: string,end: string,duration:number }[]) => {
                 return response.map(timesheet=> {
                     const active = !timesheet.end
@@ -94,4 +94,4 @@ export const kimaiApi = createApi({
     }),
 })
 
-export const {useLoginMutation, useUserQuery, useGetTimesheetsQuery, useGetTodaysTimesheetQuery } = kimaiApi
+export const {useLoginMutation, useUserQuery, useGetTimesheetsQuery, useGetTodaysTimesheetQuery, useStartTimesheetMutation, useGetActiveTimesheetQuery, useStopTimesheetMutation} = kimaiApi

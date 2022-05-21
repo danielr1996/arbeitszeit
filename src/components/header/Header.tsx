@@ -3,6 +3,7 @@ import {Link} from "react-router-dom"
 import clock from 'assets/img/clock.svg'
 import {useLoginState} from "components/login/loginSlice"
 import {useUserQuery} from "redux/kimai"
+import {StartStop} from "components/header/StartStop"
 
 export const Header: FunctionComponent = () => {
     const isLoggedIn = useLoginState()
@@ -20,7 +21,7 @@ export const Header: FunctionComponent = () => {
                     <span className="text-md mr-3"><Link to="/logout">Logout</Link></span>:
                     <span className="text-md mr-3"><Link to="/login">Login</Link></span>
                 }
-                {/*<div className="mr-3"><SaldoComponent today={today} saldo={saldo}/></div>*/}
+                {isLoggedIn && <StartStop />}
                 {isLoggedIn && <img className="w-10 ml-3 rounded-full" src={data?.avatar} alt="avatar"/>}
             </div>
         </div>
