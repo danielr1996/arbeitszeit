@@ -24,8 +24,8 @@ export type Timesheet = {
     description?: string,
     tags?: string[],
     begin: Temporal.PlainDateTime,
-    end?: Temporal.PlainDateTime,
-    duration?: Temporal.Duration,
+    end: Temporal.PlainDateTime,
+    duration: Temporal.Duration,
 }
 
 export const kimaiApi = createApi({
@@ -47,36 +47,48 @@ export const kimaiApi = createApi({
             providesTags: ['user']
         }),
         getTimesheets: builder.query<Timesheet[],void>({
-            query: () => `timesheets?size=1000000`,
+            query: () => {
+                const {isoDay, isoMonth, isoYear} = Temporal.Now.plainDateISO().getISOFields()
+                return `timesheets?end=${isoYear}-${isoMonth}-${isoDay}T00:00:00&size=1000000`
+            },
             providesTags: ['timesheets'],
+            transformResponse: (response: { id: number, description: string, tags: string[],begin: string,end: string,duration:number }[]) => {
+                return response.map(timesheet=> {
+                    const active = !timesheet.end
+                    const begin = Temporal.PlainDateTime.from(timesheet.begin)
+                    const end = active ? Temporal.Now.plainDateTimeISO() : Temporal.PlainDateTime.from(timesheet.end)
+                    const duration = begin.until(end)
+                    return{...timesheet, begin, end, active, duration}})
+            },
             async onQueryStarted(id, { dispatch, queryFulfilled }) {
                 // `onStart` side-effect
                 // dispatch(messageCreated('Fetching post...'))
-                console.log('Fetching')
+                // console.log('Fetching')
                 try {
                     const { data } = await queryFulfilled
                     // `onSuccess` side-effect
-                    console.log(data)
+                    // console.log(data)
                     // dispatch(messageCreated('Post received!'))
                 } catch (err) {
-                    console.log('error')
+                    // console.log('error')
                     // `onError` side-effect
                     // dispatch(messageCreated('Error fetching post!'))
                 }
             },
         }),
         getTodaysTimesheet: builder.query<Timesheet[],void>({
-            query: () => `timesheets?begin=2022-03-27T00:00:00`,
+            query: () => {
+                const {isoDay, isoMonth, isoYear} = Temporal.Now.plainDateISO().getISOFields()
+                return `timesheets?begin=${isoYear}-${isoMonth}-${isoDay}T00:00:00`
+            },
             providesTags: ['timesheets'],
             transformResponse: (response: { id: number, description: string, tags: string[],begin: string,end: string,duration:number }[]) => {
                 return response.map(timesheet=> {
-                    return({
-                    ...timesheet,
-                    begin: Temporal.PlainDateTime.from(timesheet.begin),
-                    end: timesheet.end === null ? undefined : Temporal.PlainDateTime.from(timesheet.end),
-                    active: !timesheet.end,
-                    duration: timesheet.duration === null ? undefined : Temporal.Duration.from({seconds: timesheet.duration})
-                })})
+                    const active = !timesheet.end
+                    const begin = Temporal.PlainDateTime.from(timesheet.begin)
+                    const end = active ? Temporal.Now.plainDateTimeISO() : Temporal.PlainDateTime.from(timesheet.end)
+                    const duration = begin.until(end)
+                    return{...timesheet, begin, end, active, duration}})
             },
         })
     }),
