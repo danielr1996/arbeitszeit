@@ -27,7 +27,10 @@ export const getEnd = (timesheets: Timesheet[], remaining: Temporal.Duration) =>
     }
     return end
 }
-export const getDuration = (timesheets: Timesheet[]) => timesheets.reduce((sum, timesheet) => sum.add(timesheet.duration), Temporal.Duration.from({hours: 0}))
+export const getDuration = (timesheets: Timesheet[], now: Temporal.PlainDateTime) =>timesheets
+    .map(t => ({...t, end: t.active ? now : t.end, duration: t.active ? t.begin.until(now) : t.duration}))
+    .reduce((sum, timesheet) => sum.add(timesheet.duration), Temporal.Duration.from({hours: 0}))
+
 export const getPercentage = (duration: Temporal.Duration, dailyWorkingTime: Temporal.Duration) => duration?.total('hours') / dailyWorkingTime.total('hours')
 export const getRemaining = (duration: Temporal.Duration, dailyWorkingTime: Temporal.Duration) => duration.subtract(dailyWorkingTime)
 export const getRemainingWithOvertime = (remaining: Temporal.Duration, overtime: Temporal.Duration) => remaining.add(overtime)
@@ -41,7 +44,7 @@ export const getGaugeProps = (dailyWorkingTime: Temporal.Duration, now: Temporal
         }
     }
     const start = getStart(timesheets)
-    const duration = getDuration(timesheets)
+    const duration = getDuration(timesheets, now)
     const percentage = getPercentage(duration, dailyWorkingTime)
     const remaining = getRemaining(duration, dailyWorkingTime)
     const end = getEnd(timesheets, remaining)
