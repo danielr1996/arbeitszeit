@@ -1,6 +1,29 @@
 import {getGaugeProps} from './DailyComponent'
 import {Temporal} from "@js-temporal/polyfill"
 
+interface TemporalMatchers<R = unknown> {
+    toEqualDuration(actual: Temporal.Duration): R;
+    toEqualPlainDateTime(actual: Temporal.PlainDateTime): R;
+}
+
+declare global {
+    namespace jest {
+        interface Expect extends TemporalMatchers {}
+        interface Matchers<R> extends TemporalMatchers<R> {}
+        interface InverseAsymmetricMatchers extends TemporalMatchers {}
+    }
+}
+
+expect.extend({
+    toEqualDuration(actual, expected) {
+        return {pass: Temporal.Duration.compare(actual, expected) === 0, message: ()=>`Durations do not match, expected: ${expected}, actual: ${actual}`}
+    },
+    toEqualPlainDateTime(actual, expected) {
+        return {pass: Temporal.PlainDateTime.compare(actual, expected) === 0, message: ()=>`PlainDateTimes do not match, expected: ${expected}, actual: ${actual}`}
+    }
+
+})
+
 describe('getGaugeProps', () => {
     const dailyWorkingTime = Temporal.Duration.from({hours: 8})
     const now = Temporal.PlainDateTime.from('2020-08-05T14:00:00')
@@ -8,15 +31,16 @@ describe('getGaugeProps', () => {
     test('with undefined timesheets', () => {
         const actual = getGaugeProps(dailyWorkingTime, now, overtime, undefined)
         const expected = {percentage: 1, overtime}
+
         expect(actual.percentage).toStrictEqual(expected.percentage)
-        expect(Temporal.Duration.compare(actual.overtime || '', expected.overtime)).toBe(0)
+        expect(actual.overtime).toEqualDuration(expected.overtime)
     })
 
     test('with no timesheets', () => {
         const actual = getGaugeProps(dailyWorkingTime, now, overtime, [])
         const expected = {percentage: 1, overtime}
         expect(actual.percentage).toStrictEqual(expected.percentage)
-        expect(Temporal.Duration.compare(actual.overtime || '', expected.overtime)).toBe(0)
+        expect(actual.overtime).toEqualDuration(expected.overtime)
     })
 
     test('with one active timesheet', () => {
@@ -37,10 +61,10 @@ describe('getGaugeProps', () => {
             end: Temporal.PlainDateTime.from('2020-08-05T16:00:00'),
         }
         expect(actual.percentage).toEqual(expected.percentage)
-        expect(Temporal.Duration.compare(actual.duration || '', expected.duration)).toBe(0)
-        expect(Temporal.Duration.compare(actual.remaining || '', expected.remaining)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.start || '', expected.start)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.end || '', expected.end)).toBe(0)
+        expect(actual.duration).toEqualDuration(expected.duration)
+        expect(actual.remaining).toEqualDuration(expected.remaining)
+        expect(actual.start).toEqualPlainDateTime(expected.start)
+        expect(actual.end).toEqualPlainDateTime(expected.end)
     })
 
     test('with two completed and one active timesheet', () => {
@@ -77,10 +101,10 @@ describe('getGaugeProps', () => {
             end: Temporal.PlainDateTime.from('2020-08-05T16:00:00'),
         }
         expect(actual.percentage).toEqual(expected.percentage)
-        expect(Temporal.Duration.compare(actual.duration || '', expected.duration)).toBe(0)
-        expect(Temporal.Duration.compare(actual.remaining || '', expected.remaining)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.start || '', expected.start)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.end || '', expected.end)).toBe(0)
+        expect(actual.duration).toEqualDuration(expected.duration)
+        expect(actual.remaining).toEqualDuration(expected.remaining)
+        expect(actual.start).toEqualPlainDateTime(expected.start)
+        expect(actual.end).toEqualPlainDateTime(expected.end)
     })
 
     test('with one completed timesheet', () => {
@@ -101,10 +125,10 @@ describe('getGaugeProps', () => {
             end: Temporal.PlainDateTime.from('2020-08-05T16:00:00'),
         }
         expect(actual.percentage).toEqual(expected.percentage)
-        expect(Temporal.Duration.compare(actual.duration || '', expected.duration)).toBe(0)
-        expect(Temporal.Duration.compare(actual.remaining || '', expected.remaining)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.start || '', expected.start)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.end || '', expected.end)).toBe(0)
+        expect(actual.duration).toEqualDuration(expected.duration)
+        expect(actual.remaining).toEqualDuration(expected.remaining)
+        expect(actual.start).toEqualPlainDateTime(expected.start)
+        expect(actual.end).toEqualPlainDateTime(expected.end)
     })
 
     test('with three completed timesheets', () => {
@@ -141,10 +165,10 @@ describe('getGaugeProps', () => {
             end: Temporal.PlainDateTime.from('2020-08-05T17:00:00'),
         }
         expect(actual.percentage).toEqual(expected.percentage)
-        expect(Temporal.Duration.compare(actual.duration || '', expected.duration)).toBe(0)
-        expect(Temporal.Duration.compare(actual.remaining || '', expected.remaining)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.start || '', expected.start)).toBe(0)
-        expect(Temporal.PlainDateTime.compare(actual.end || '', expected.end)).toBe(0)
+        expect(actual.duration).toEqualDuration(expected.duration)
+        expect(actual.remaining).toEqualDuration(expected.remaining)
+        expect(actual.start).toEqualPlainDateTime(expected.start)
+        expect(actual.end).toEqualPlainDateTime(expected.end)
     })
 
     test('with one completed timesheet greater than 8 hours', () => {
@@ -160,7 +184,7 @@ describe('getGaugeProps', () => {
         const expected = {
             overtime: Temporal.Duration.from({hours: 1, minutes: 30})
         }
-        expect(Temporal.Duration.compare(actual.overtime || '', expected.overtime)).toBe(0)
+        expect(actual.overtime).toEqualDuration(expected.overtime)
     })
 
     test('with one completed timesheet equal to 8 hours', () => {
@@ -176,7 +200,7 @@ describe('getGaugeProps', () => {
         const expected = {
             overtime: Temporal.Duration.from({hours: 1})
         }
-        expect(Temporal.Duration.compare(actual.overtime || '', expected.overtime)).toBe(0)
+        expect(actual.overtime).toEqualDuration(expected.overtime)
     })
 
     test('with one completed timesheet less than 8 hours', () => {
@@ -192,6 +216,6 @@ describe('getGaugeProps', () => {
         const expected = {
             overtime: Temporal.Duration.from({hours: 1})
         }
-        expect(Temporal.Duration.compare(actual.overtime || '', expected.overtime)).toBe(0)
+        expect(actual.overtime).toEqualDuration(expected.overtime)
     })
 })
