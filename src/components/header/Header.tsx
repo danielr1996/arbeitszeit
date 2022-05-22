@@ -2,9 +2,9 @@ import React, {FunctionComponent} from "react"
 import clock from 'assets/img/clock.svg'
 import {useLoginState} from "components/login/loginSlice"
 import {StartStop} from "components/header/StartStop"
-import {Avatar} from "./Avatar";
-import {LoginButton} from "./LoginButton";
-import {Link} from "react-router-dom";
+import {Avatar} from "./Avatar"
+import {LoginButton} from "./LoginButton"
+import {Link} from "react-router-dom"
 
 export const Header: FunctionComponent = () => {
     const isLoggedIn = useLoginState()
