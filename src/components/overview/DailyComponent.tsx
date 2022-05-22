@@ -6,6 +6,11 @@ import {useDailyWorkingTime} from "lib/useDailyWorkingTime"
 import {Timesheet} from "redux/kimai"
 import {useNow} from "lib/useNow"
 import {Temporal} from "@js-temporal/polyfill"
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"
+import {faHourglassStart} from "@fortawesome/free-solid-svg-icons"
+import {faHourglassEnd} from "@fortawesome/free-solid-svg-icons"
+import {faStopwatch} from "@fortawesome/free-solid-svg-icons"
+import {faHourglass} from "@fortawesome/free-solid-svg-icons"
 
 type GaugeProps = {
     percentage?: number,
@@ -22,7 +27,6 @@ export const getStart = (timesheets: Timesheet[]) => timesheets.slice(-1)[0].beg
 export const getEnd = (timesheets: Timesheet[], remaining: Temporal.Duration) => {
     let end = timesheets[0].end
     if (timesheets[0].active) {
-        // @ts-ignore
         end = end.subtract(remaining)
     }
     return end
@@ -83,14 +87,23 @@ export const DailyComponent: FunctionComponent<Props> = ({timesheets, overtimeGe
         <div className="m-5 inline-block">
             <Gauge
                 percentage={percentage}
-                startText={<span className="text-3xl"><Time displayEmpty time={start}/> </span>}
-                endText={<span className="text-3xl"><Time displayEmpty time={end}/> </span>}
+                startText={<span className="text-3xl">
+                    <FontAwesomeIcon className="text-2xl" icon={faHourglassStart} />
+                    <Time displayEmpty time={start}/>
+                </span>}
+                endText={<span className="text-3xl">
+                    <Time displayEmpty time={end}/>
+                    <FontAwesomeIcon className="text-2xl" icon={faHourglassEnd} />
+                </span>}
                 centerText={<div className="text-center">
                             <span className="text-4xl">
+                                <FontAwesomeIcon icon={faStopwatch} />
                                 <Duration withColor withoutMono displayEmpty withSeconds duration={duration}/>
                             </span><br/>
-                    <span className="text-xl">
+                            <span className="text-xl">
+                                <FontAwesomeIcon icon={faHourglass} />
                                 <Duration withColor withoutMono displayEmpty withSeconds duration={remaining}/><br/>
+                                <FontAwesomeIcon icon={faHourglass} />
                                 (<Duration withColor withoutMono displayEmpty withSeconds
                                            duration={remainingWithOvertime}/>)
                             </span>
