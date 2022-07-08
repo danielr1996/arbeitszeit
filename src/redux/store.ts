@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
-import { kimaiApi } from 'redux/kimai'
+import { kimaiApi } from 'redux/clockify'
 import {loginReducer} from "components/login/loginSlice"
 import {loginMiddleware} from "components/login/loginMiddleware"
 

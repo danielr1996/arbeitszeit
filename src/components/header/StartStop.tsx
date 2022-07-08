@@ -3,7 +3,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome"
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 import { faPause } from '@fortawesome/free-solid-svg-icons'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
-import {useGetActiveTimesheetQuery, useStartTimesheetMutation, useStopTimesheetMutation} from "redux/kimai"
+import {useGetActiveTimesheetQuery, useStartTimesheetMutation, useStopTimesheetMutation} from "redux/clockify"
 
 export const StartStop: FunctionComponent = () => {
     const [start] = useStartTimesheetMutation()

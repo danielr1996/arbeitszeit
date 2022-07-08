@@ -16,7 +16,7 @@ export const Header: FunctionComponent = () => {
                 <span></span>
             </div>
             <div className="flex items-center">
-                {isLoggedIn && <span className="ml-7 text-3xl"><StartStop /></span>}
+                {/*{isLoggedIn && <span className="ml-7 text-3xl"><StartStop /></span>}*/}
                 <span className="ml-7 text-3xl"><LoginButton /></span>
                 {isLoggedIn && <span className="ml-6"><Avatar /></span>}
             </div>

@@ -3,7 +3,7 @@ import {Gauge} from "lib/GaugeComponent"
 import {Time} from "lib/Time"
 import {Duration} from "lib/Duration"
 import {useDailyWorkingTime} from "lib/useDailyWorkingTime"
-import {Timesheet} from "redux/kimai"
+import {Timesheet} from "redux/clockify"
 import {useNow} from "lib/useNow"
 import {Temporal} from "@js-temporal/polyfill"
 
