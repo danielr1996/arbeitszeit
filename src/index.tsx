@@ -5,6 +5,10 @@ import {store} from "redux/store"
 import {App} from "App"
 import './assets/styles/index.scss'
 
+import {toTemporalInstant } from '@js-temporal/polyfill'
+// @ts-ignore
+Date.prototype.toTemporalInstant = toTemporalInstant
+
 ReactDOM.render(
   <React.StrictMode>
       <Provider store={store}>

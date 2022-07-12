@@ -26,13 +26,26 @@ export type Timesheet = {
     duration: Temporal.Duration,
 }
 
+type ClockifyTimeEntry = { id: number, timeInterval: {start: string, end: string, duration: number }}
+const transformResponse = (response: ClockifyTimeEntry[]): Timesheet[] => {
+    return response.map(timesheet => {
+        const active = !timesheet.timeInterval.end
+        // @ts-ignore
+        const begin = new Date(timesheet.timeInterval.start).toTemporalInstant().toZonedDateTimeISO(Temporal.Now.timeZone()).toPlainDateTime()
+        // @ts-ignore
+        const end = active ? Temporal.Now.plainDateTimeISO() : new Date(timesheet.timeInterval.end).toTemporalInstant().toZonedDateTimeISO(Temporal.Now.timeZone()).toPlainDateTime()
+        const duration = begin.until(end)
+        return {...timesheet, begin, end, active, duration}
+    })
+}
+
 export const kimaiApi = createApi({
     reducerPath: 'kimaiApi',
     tagTypes: ['user', 'timesheets', 'today', 'active'],
     baseQuery: dynamicBaseQuery,
     endpoints: (builder) => ({
-        login: builder.mutation<any, string>({
-            query: (token) => ({
+        login: builder.mutation<any, {token: string, workspaceId: string, userId: string}>({
+            query: ({token}) => ({
                 url: `https://api.clockify.me/api/v1/user`,
                 headers: {'X-API-KEY': token}
             }),
@@ -47,7 +60,7 @@ export const kimaiApi = createApi({
         }),
         getActiveTimesheet: builder.query<Timesheet | null, void>({
             providesTags: ['timesheets', 'today', 'active'],
-            query: () => `workspaces/6045ec663c29ee3f11aad4f1/user/62bd9675673709522335a7b5/time-entries?in-progress=1`,
+            query: () => `workspaces/${localStorage.getItem('workspaceId')}/user/${localStorage.getItem('userId')}/time-entries?in-progress=1`,
             transformResponse: (response: Timesheet[]) => {
                 return response.length > 0 ? response[0] : null
             },
@@ -56,37 +69,31 @@ export const kimaiApi = createApi({
             query: () => `user`,
             providesTags: ['user']
         }),
-        getTimesheets: builder.query<Timesheet[], void>({
+        getTimesheets: builder.query<Timesheet[],void>({
             query: () => {
+                const workspace = localStorage.getItem('workspaceId')
+                const user = localStorage.getItem('userId')
                 const {isoDay, isoMonth, isoYear} = Temporal.Now.plainDateISO().getISOFields()
-                return `workspaces/6045ec663c29ee3f11aad4f1/user/62bd9675673709522335a7b5/time-entries?end=${isoYear}-0${isoMonth}-0${isoDay}T00:00:00Z&page-size=5000`
+                const endMonth = isoMonth.toString().padStart(2,'0')
+                const endDay = isoDay.toString().padStart(2,'0')
+                const endDate=`${isoYear}-${endMonth}-${endDay}T00:00:00Z`
+                return `workspaces/${workspace}/user/${user}/time-entries?end=${endDate}&page-size=5000`
             },
             providesTags: ['timesheets'],
-            transformResponse: (response: { id: number, timeInterval: {begin: string, end: string, duration: number }}[]) => {
-                return response.map(timesheet => {
-                    const active = !timesheet.timeInterval.end
-                    const begin = Temporal.PlainDateTime.from(timesheet.timeInterval.begin)
-                    const end = active ? Temporal.Now.plainDateTimeISO() : Temporal.PlainDateTime.from(timesheet.timeInterval.end)
-                    const duration = begin.until(end)
-                    return {...timesheet, begin, end, active, duration}
-                })
-            },
+            transformResponse
         }),
         getTodaysTimesheet: builder.query<Timesheet[], void>({
             query: () => {
+                const workspace = localStorage.getItem('workspaceId')
+                const user = localStorage.getItem('userId')
                 const {isoDay, isoMonth, isoYear} = Temporal.Now.plainDateISO().getISOFields()
-                return `workspaces/6045ec663c29ee3f11aad4f1/user/62bd9675673709522335a7b5/time-entries?start=${isoYear}-0${isoMonth}-0${isoDay}T00:00:00Z`
+                const startMonth = isoMonth.toString().padStart(2,'0')
+                const startDay = isoDay.toString().padStart(2,'0')
+                const startDate=`${isoYear}-${startMonth}-${startDay}T00:00:00Z`
+                return `workspaces/${workspace}/user/${user}/time-entries?start=${startDate}`
             },
             providesTags: ['timesheets', 'today'],
-            transformResponse: (response: { id: number, timeInterval: {start: string, end: string, duration: number }}[]) => {
-                return response.map(timesheet => {
-                    const active = !timesheet.timeInterval.end
-                    const begin = Temporal.PlainDateTime.from(timesheet.timeInterval.start.slice(0,-1))
-                    const end = active ? Temporal.Now.plainDateTimeISO() : Temporal.PlainDateTime.from(timesheet.timeInterval.end.slice(0,-1))
-                    const duration = begin.until(end)
-                    return {...timesheet, begin, end, active, duration}
-                })
-            },
+            transformResponse
         })
     }),
 })
